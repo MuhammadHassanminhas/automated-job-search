@@ -2,7 +2,7 @@
 
 Two swarm configurations. Spine uses 4 agents. Expansion spawns 2 more specialists when scope genuinely requires them.
 
-**Invocation rule:** `swarm_init` and all `Task(...)` spawns in ONE message → parallel execution. Never spawn serially.
+**Invocation rule:** ALL `Task(...)` spawns for a phase must go in ONE message so Claude Code runs them in parallel. Never spawn serially, never one-per-message.
 
 ---
 
@@ -11,41 +11,43 @@ Two swarm configurations. Spine uses 4 agents. Expansion spawns 2 more specialis
 Spawn when Phase A starts:
 
 ```
-mcp__ruv-swarm__swarm_init({ topology: "hierarchical", maxAgents: 4, strategy: "specialized" })
+Task("Coordinator", "<§1 prompt + Phase A goal + branch discipline>", "general-purpose")
+Task("Builder",     "<§2 prompt + Phase A goal + branch discipline>", "general-purpose")
+Task("Tester",      "<§3 prompt + Phase A goal + branch discipline>", "general-purpose")
+Task("Reviewer",    "<§4 prompt + Phase A goal + branch discipline>", "general-purpose")
 
-Task("Coordinator", "<§1 + Phase A goal + hook instr>", "hierarchical-coordinator")
-Task("Builder",     "<§2 + Phase A goal>",              "coder")
-Task("Tester",      "<§3 + Phase A goal>",              "tester")
-Task("Reviewer",    "<§4 + Phase A goal>",              "reviewer")
-
-TodoWrite({ todos: [<one per Phase A step>] })
+TodoWrite({ todos: [<one per Phase A step: A.1, A.2, A.3, A.4>] })
 ```
 
 ## Expansion swarm (Phase B onward)
 
-When Phase B starts, spawn two more — do NOT re-spawn the existing four, they persist:
+When Phase B starts, spawn two more in ONE message — do NOT re-spawn the existing four, they're already active:
 
 ```
-Task("ML Specialist",       "<§5 + Phase B goal>", "coder")
-Task("Frontend Specialist", "<§6 + Phase B goal>", "coder")
+Task("ML Specialist",       "<§5 prompt + Phase B goal>", "general-purpose")
+Task("Frontend Specialist", "<§6 prompt + Phase B goal>", "general-purpose")
 ```
 
-Now 6 agents. Builder's scope narrows to backend + scrapers per the ownership table.
+Now 6 agents active. Builder's scope narrows to backend + scrapers per the ownership table below.
 
 ---
 
 ## Roles
 
-### §1 Coordinator (`hierarchical-coordinator`)
-Tracks phase state. Routes work. Owns memory namespace `swarm/intel/*`. Enforces checkpoints — blocks progress on failed tests or dead-code hits. **Writes no code.** Kills and reassigns any worker caught doing another's job.
+### §1 Coordinator
 
-### §2 Builder (`coder`)
+Tracks phase state. Routes work between agents. Enforces checkpoints — blocks progress on failed tests or Rule-6 findings. **Writes no implementation code.** Kills and reassigns any worker caught doing another's job.
+
+### §2 Builder
+
 **Phase A:** writes every implementation file — scrapers, ranker, generator, backend, the minimal UI pages. **Phase B+:** scope narrows to `app/scrapers/**`, `app/api/**`, `app/models/**`, `app/schemas/**`, `app/services/**`, `app/auth/**`, `migrations/**`, `app/main.py`.
 
-### §3 Tester (`tester`)
+### §3 Tester
+
 Writes failing tests FIRST, always. Never writes application code — ever.
 
-Test rules (reviewer enforces):
+Test rules (Reviewer enforces):
+
 - ≥1 `hypothesis` property-based test per module.
 - `polyfactory` factories for every model.
 - Parameterized edge cases: empty, null, unicode, max-length, malformed, duplicate.
@@ -54,7 +56,8 @@ Test rules (reviewer enforces):
 
 Owns `tests/**`, `web/tests/**`.
 
-### §4 Reviewer (`reviewer`)
+### §4 Reviewer
+
 Veto power on every PR. Runs on every step:
 
 ```
@@ -69,17 +72,19 @@ Also verifies: layer boundaries from `ARCHITECTURE.md`, path ownership from the 
 
 Writes no features, tests, or docs.
 
-### §5 ML Specialist — Phase B+ (`coder`)
+### §5 ML Specialist — Phase B+
+
 Owns `app/llm/**`, `app/ranker/**`, `app/generator/**`, `app/generator/prompts/**`. Builds the LLM judge stage, Gemini failover, prompt caching, and the full generator suite.
 
-### §6 Frontend Specialist — Phase B+ (`coder`)
+### §6 Frontend Specialist — Phase B+
+
 Owns `web/**`. In Phase A, Builder produces the minimal UI; Specialist takes over in Phase B for polish (shadcn, loading states, optimistic updates, drag-drop tracker).
 
 ---
 
 ## Path ownership (enforced)
 
-| Path | Spine owner | Expansion owner |
+| Path | Spine owner (Phase A) | Expansion owner (Phase B+) |
 |---|---|---|
 | `docs/ARCHITECTURE.md`, `docs/adr/*` | Coordinator writes ADRs | same |
 | `app/scrapers/**`, `app/api/**`, `app/models/**`, `app/schemas/**`, `app/services/**`, `app/auth/**`, `migrations/**`, `app/main.py` | Builder | Builder |
@@ -88,17 +93,12 @@ Owns `web/**`. In Phase A, Builder produces the minimal UI; Specialist takes ove
 | `tests/**`, `web/tests/**` | Tester | Tester |
 | Rule-6 scans, PR reviews | Reviewer | Reviewer |
 
-Commit touches a path → only that path's owner produced it. Reviewer rejects violations.
+Commit touches a path → only that path's owner may have produced it. Reviewer rejects violations.
 
 ---
 
-## Hooks (Ruflo pre-configures in `.claude/settings.json`)
+## Coordination (no Ruflo, no shared swarm memory)
 
-| Hook | Purpose |
-|---|---|
-| `pre-task` | load prior memory |
-| `post-edit` | run formatter (`ruff format`, `prettier`), log change to memory |
-| `post-task` | run step's tests + Rule 6 scan |
-| `session-end` | persist state for resume |
-
-Agents never invoke hooks manually. Ruflo runs them.
+- Coordination is via **git branches** (`step/<id>/tests`, `step/<id>/impl`), **TodoWrite** (visible to all agents), and **direct Task prompts** (each agent receives its scope + goal at spawn time).
+- State does NOT persist across Claude Code sessions. At session resume, state is reconstructed from git log + branch list + last TodoWrite output.
+- If an agent needs information from another agent, Coordinator relays via the next Task spawn — agents do not communicate directly.

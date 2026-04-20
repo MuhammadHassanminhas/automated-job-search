@@ -1,0 +1,32 @@
+name: CI
+on:
+  push:
+    branches: [main, "step/**"]
+  pull_request:
+    branches: [main]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: intern
+          POSTGRES_PASSWORD: intern
+          POSTGRES_DB: internship
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql+asyncpg://intern:intern@localhost:5432/internship
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+      - run: uv sync
+      - run: uv run alembic upgrade head
+      - run: uv run ruff check --select F401,F841,F811 app tests
+      - run: uv run pytest tests/ -v --cov=app

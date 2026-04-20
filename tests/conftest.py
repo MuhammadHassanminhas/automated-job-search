@@ -1,5 +1,4 @@
 import pytest
-import pytest_asyncio
 
 # NOTE: app.* imports are intentionally in test files, not here.
 # conftest must remain importable so pytest can collect all tests.

@@ -15,15 +15,13 @@ from httpx import AsyncClient
 from app.main import app as fastapi_app  # ModuleNotFoundError until app/ exists
 
 
-pytestmark = pytest.mark.asyncio
-
-
 @pytest.fixture
 async def client():
     async with AsyncClient(app=fastapi_app, base_url="http://test") as ac:
         yield ac
 
 
+@pytest.mark.asyncio
 async def test_health_200(client: AsyncClient) -> None:
     resp = await client.get("/health")
     assert resp.status_code == 200
@@ -34,6 +32,7 @@ async def test_health_200(client: AsyncClient) -> None:
     assert isinstance(body["version"], str) and body["version"]
 
 
+@pytest.mark.asyncio
 async def test_health_503_when_db_down(monkeypatch) -> None:
     from app import db as app_db  # noqa: PLC0415
 

@@ -1,0 +1,33 @@
+version: "3.9"
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: intern
+      POSTGRES_PASSWORD: intern
+      POSTGRES_DB: internship
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U intern -d internship"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+  web:
+    build: web/
+    ports:
+      - "3000:3000"
+    depends_on:
+      - app
+volumes:
+  postgres_data:

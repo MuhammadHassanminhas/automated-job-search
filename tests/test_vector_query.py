@@ -15,9 +15,7 @@ from app.models.job import Job, JobSource  # ModuleNotFoundError until app/ exis
 from app.db import AsyncSessionFactory
 
 
-pytestmark = pytest.mark.asyncio
-
-
+@pytest.mark.asyncio
 async def test_hnsw_cosine_nearest_neighbor_self() -> None:
     rng = np.random.default_rng(seed=42)
     n = 100

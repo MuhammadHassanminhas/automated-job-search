@@ -5,7 +5,6 @@ Fails at collection with ModuleNotFoundError('app') until app/ exists.
 """
 from __future__ import annotations
 
-import pytest
 import hypothesis.strategies as st
 from hypothesis import given, settings
 from polyfactory.factories.base import BaseFactory
