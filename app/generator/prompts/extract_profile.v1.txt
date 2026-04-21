@@ -1,0 +1,8 @@
+Extract all technical skills from the following resume text.
+Return a JSON array of skill strings, lowercase, deduplicated.
+Only include skills explicitly mentioned in the text.
+
+Resume:
+{resume_text}
+
+Skills JSON:
