@@ -72,11 +72,11 @@ async def generate_draft(
         )
 
     # 2. Load Job and Profile
-    job = await session.get(Job, job_id)
+    job = await session.scalar(select(Job).where(Job.id == job_id))
     if job is None:
         raise ValueError(f"Job {job_id} not found")
 
-    profile = await session.get(Profile, profile_id)
+    profile = await session.scalar(select(Profile).where(Profile.id == profile_id))
     if profile is None:
         raise ValueError(f"Profile {profile_id} not found")
 
