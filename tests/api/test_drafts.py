@@ -11,21 +11,21 @@ import hypothesis.strategies as st
 import pytest
 from hypothesis import given, settings as h_settings
 from httpx import ASGITransport, AsyncClient
-from polyfactory.factories.base import BaseFactory
+from polyfactory.factories.pydantic_factory import ModelFactory
 
 from app.main import app as fastapi_app
 from app.models.application import ApplicationStatus
 from app.models.draft import Draft
-from app.schemas.draft import DraftRead, DraftPatch  # ImportError until impl
+from app.schemas.draft import DraftRead  # ImportError until impl
 
 
-class DraftReadFactory(BaseFactory):
+class DraftReadFactory(ModelFactory):
     __model__ = DraftRead
 
 
 @pytest.fixture
-async def auth_client(seeded_user_creds: dict):
-    """Authenticated AsyncClient."""
+async def auth_client(_seeded_user, seeded_user_creds: dict):
+    """Authenticated AsyncClient. _seeded_user ensures the user row exists before login."""
     async with AsyncClient(
         transport=ASGITransport(app=fastapi_app), base_url="http://test"
     ) as ac:
@@ -38,8 +38,9 @@ async def auth_client(seeded_user_creds: dict):
 async def test_generate_creates_application_and_draft(
     auth_client: AsyncClient, seeded_job_id: uuid.UUID
 ) -> None:
+    # Patch at the router's import site so the mock intercepts the call.
     with patch(
-        "app.services.generation.generate_draft", new_callable=AsyncMock
+        "app.api.drafts.generate_draft", new_callable=AsyncMock
     ) as mock_gen:
         fake_draft = Draft(
             id=uuid.uuid4(),
@@ -61,8 +62,13 @@ async def test_generate_creates_application_and_draft(
 
 
 async def test_generate_unknown_job_returns_404(auth_client: AsyncClient) -> None:
-    unknown = uuid.uuid4()
-    resp = await auth_client.post(f"/api/drafts/generate/{unknown}")
+    # Patch generate_draft to raise ValueError (job not found) bypassing the cap check.
+    with patch(
+        "app.api.drafts.generate_draft",
+        new_callable=AsyncMock,
+        side_effect=ValueError("Job not found"),
+    ):
+        resp = await auth_client.post(f"/api/drafts/generate/{uuid.uuid4()}")
     assert resp.status_code == 404
 
 

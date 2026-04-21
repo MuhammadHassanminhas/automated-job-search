@@ -22,3 +22,9 @@ async def check_connection() -> None:
 async def get_session() -> AsyncGenerator[AsyncSession, None]:
     async with AsyncSessionFactory() as session:
         yield session
+
+
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
+    """FastAPI dependency that yields an AsyncSession."""
+    async with AsyncSessionFactory() as session:
+        yield session

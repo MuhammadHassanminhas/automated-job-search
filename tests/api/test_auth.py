@@ -43,20 +43,20 @@ async def test_login_bad_credentials_returns_401(client: AsyncClient) -> None:
     assert resp.status_code == 401
 
 
-async def test_login_sets_session_cookie(client: AsyncClient, seeded_user_creds: dict) -> None:
+async def test_login_sets_session_cookie(client: AsyncClient, _seeded_user, seeded_user_creds: dict) -> None:
     resp = await client.post("/api/auth/login", json=seeded_user_creds)
     assert resp.status_code == 200
     assert "session" in resp.cookies
 
 
-async def test_me_after_login_returns_email(client: AsyncClient, seeded_user_creds: dict) -> None:
+async def test_me_after_login_returns_email(client: AsyncClient, _seeded_user, seeded_user_creds: dict) -> None:
     await client.post("/api/auth/login", json=seeded_user_creds)
     resp = await client.get("/api/auth/me")
     assert resp.status_code == 200
     assert resp.json()["email"] == seeded_user_creds["email"]
 
 
-async def test_me_after_logout_returns_401(client: AsyncClient, seeded_user_creds: dict) -> None:
+async def test_me_after_logout_returns_401(client: AsyncClient, _seeded_user, seeded_user_creds: dict) -> None:
     await client.post("/api/auth/login", json=seeded_user_creds)
     await client.post("/api/auth/logout")
     resp = await client.get("/api/auth/me")
@@ -77,6 +77,6 @@ def test_session_cookie_roundtrip() -> None:
 def test_tampered_cookie_raises() -> None:
     from app.auth.session import InvalidSession  # ImportError until impl
     cookie = create_session_cookie({"user_id": "x"})
-    tampered = cookie[:-4] + "XXXX"
+    tampered = cookie[:-4] + "JUNK"
     with pytest.raises(InvalidSession):
         decode_session_cookie(tampered)

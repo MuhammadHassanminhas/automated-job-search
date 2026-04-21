@@ -10,11 +10,9 @@ from hypothesis import given, settings as h_settings
 from httpx import ASGITransport, AsyncClient
 
 from app.main import app as fastapi_app
-from app.schemas.job import JobRead  # ImportError until impl
-
 
 @pytest.fixture
-async def auth_client(seeded_user_creds: dict):
+async def auth_client(_seeded_user, seeded_user_creds: dict):
     async with AsyncClient(
         transport=ASGITransport(app=fastapi_app), base_url="http://test"
     ) as ac:

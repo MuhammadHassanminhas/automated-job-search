@@ -8,18 +8,30 @@ import uuid
 from typing import AsyncGenerator
 
 import pytest
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
+from app.auth.session import hash_password  # ImportError until impl
 from app.config import settings
 from app.models.application import Application, ApplicationStatus
 from app.models.draft import Draft
 from app.models.job import Job, JobSource
 from app.models.user import User
-from app.auth.session import hash_password  # ImportError until impl
 
 
 TEST_EMAIL = "testuser@example.com"
 TEST_PASSWORD = "TestPass123!"
+
+
+async def _ensure_user(db: AsyncSession) -> User:
+    existing = await db.scalar(select(User).where(User.email == TEST_EMAIL))
+    if existing:
+        return existing
+    user = User(email=TEST_EMAIL, password_hash=hash_password(TEST_PASSWORD))
+    db.add(user)
+    await db.commit()
+    await db.refresh(user)
+    return user
 
 
 @pytest.fixture(scope="session")
@@ -37,17 +49,13 @@ async def db_session() -> AsyncGenerator[AsyncSession, None]:
 
 
 @pytest.fixture
-async def seeded_user(db_session: AsyncSession) -> User:
-    from sqlalchemy import select
+async def _seeded_user(db_session: AsyncSession) -> User:
+    return await _ensure_user(db_session)
 
-    existing = await db_session.scalar(select(User).where(User.email == TEST_EMAIL))
-    if existing:
-        return existing
-    user = User(email=TEST_EMAIL, password_hash=hash_password(TEST_PASSWORD))
-    db_session.add(user)
-    await db_session.commit()
-    await db_session.refresh(user)
-    return user
+
+@pytest.fixture
+async def seeded_user(db_session: AsyncSession) -> User:
+    return await _ensure_user(db_session)
 
 
 @pytest.fixture
