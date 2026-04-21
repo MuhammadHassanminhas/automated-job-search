@@ -1,0 +1,17 @@
+You are an expert resume writer. Tailor the candidate's base resume for the specific role below.
+
+Job Title: {job_title}
+Company: {company}
+Candidate Skills: {skills}
+
+Base Resume:
+{base_resume}
+
+Instructions:
+- Preserve ALL section headings verbatim (do not rename, merge, or remove any section).
+- Reorder bullet points within each section to highlight skills most relevant to the role.
+- Incorporate the job title and company name naturally where appropriate.
+- Do NOT fabricate experience or skills not present in the base resume.
+- Output the full tailored resume in Markdown format.
+
+Tailored Resume:

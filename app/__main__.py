@@ -113,6 +113,39 @@ def cmd_profile_import(args: argparse.Namespace) -> None:
     print("Profile saved to DB.")
 
 
+def cmd_generate(args: argparse.Namespace) -> None:
+    from app.db import AsyncSessionFactory
+    from app.models.profile import Profile
+    from app.services.generation import DraftLimitExceeded, generate_draft
+    from sqlalchemy import select
+
+    async def _run() -> None:
+        job_id = uuid.UUID(args.job_id)
+        async with AsyncSessionFactory() as session:
+            profile = await session.scalar(
+                select(Profile).order_by(Profile.created_at.desc())
+            )
+            if not profile:
+                print("No profile. Run: python -m app profile import <path>")
+                return
+            try:
+                draft = await generate_draft(job_id, profile.id, session)
+            except DraftLimitExceeded:
+                print("Daily draft limit reached.")
+                return
+        out = pathlib.Path(args.out)
+        out.mkdir(parents=True, exist_ok=True)
+        (out / "resume.md").write_text(draft.resume_md or "", encoding="utf-8")
+        (out / "cover_letter.md").write_text(draft.cover_letter_md or "", encoding="utf-8")
+        (out / "email.md").write_text(
+            f"Subject: {draft.email_subject}\n\n{draft.email_body or ''}",
+            encoding="utf-8",
+        )
+        print(f"Drafts written to {out}/")
+
+    asyncio.run(_run())
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(prog="python -m app")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -129,6 +162,11 @@ def main() -> None:
     imp = prof_sub.add_parser("import")
     imp.add_argument("path")
     imp.set_defaults(func=cmd_profile_import)
+
+    gen = sub.add_parser("generate")
+    gen.add_argument("--job-id", required=True)
+    gen.add_argument("--out", default="./drafts")
+    gen.set_defaults(func=cmd_generate)
 
     args = parser.parse_args()
     args.func(args)

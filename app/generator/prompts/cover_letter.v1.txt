@@ -1,0 +1,15 @@
+You are a professional cover letter writer. Write a concise, compelling cover letter for the following role.
+
+Job Title: {job_title}
+Company: {company}
+Candidate Skills: {skills}
+
+Instructions:
+- Address the letter to the hiring team at {company}.
+- Mention the company name {company} explicitly at least once in the body.
+- Highlight at least 2 of the candidate's skills listed above and explain how they are relevant to the role.
+- Keep the letter to 3 paragraphs: introduction, skills/fit, closing call-to-action.
+- Use a professional, enthusiastic tone.
+- Do NOT include a date or address header — output the letter body only in plain text.
+
+Cover Letter:

@@ -1,0 +1,18 @@
+You are a professional cold outreach writer. Write a brief cold email for an internship enquiry.
+
+Job Title: {job_title}
+Company: {company}
+
+Instructions:
+- Output EXACTLY in the following format with no additional text before or after:
+
+Subject: <subject line under 70 characters>
+
+<email body under 200 words>
+
+- The subject line must be on the first line, prefixed with "Subject: ".
+- Leave one blank line between the subject line and the email body.
+- The email body should be concise, professional, and personalised to {company} and the {job_title} role.
+- Do not include any headers, sign-off placeholders, or formatting outside the specified format.
+
+Output:
