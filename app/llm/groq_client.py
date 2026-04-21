@@ -1,7 +1,7 @@
 from __future__ import annotations
-import os
 from typing import Any
 
+from app.config import settings
 from app.llm.client import LLMClient
 
 try:
@@ -40,7 +40,7 @@ class GroqClient(LLMClient):
     def __init__(self) -> None:
         if not _GROQ_AVAILABLE:
             raise ImportError("groq package not installed")
-        self._client = Groq(api_key=os.environ.get("GROQ_API_KEY", ""))
+        self._client = Groq(api_key=settings.groq_api_key)
         _dec = _make_retry_decorator()
         if _dec is not None:
             self._call_api = _dec(self._call_api)  # type: ignore[method-assign]
