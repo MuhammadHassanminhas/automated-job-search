@@ -1,0 +1,53 @@
+[
+  {"legal": "RemoteOK.com - Remote Jobs - All rights reserved. Do not scrape without permission."},
+  {
+    "id": "123456",
+    "position": "ML Engineer",
+    "company": "DataCo",
+    "location": "Remote",
+    "description": "Python ML TensorFlow role building production machine learning pipelines",
+    "url": "https://remoteok.com/remote-jobs/123456",
+    "date": "2024-01-15T00:00:00Z",
+    "tags": ["python", "ml", "tensorflow"]
+  },
+  {
+    "id": "234567",
+    "position": "Backend Developer",
+    "company": "CloudStack Inc",
+    "location": "Remote",
+    "description": "Python FastAPI backend developer for SaaS platform with PostgreSQL and Redis",
+    "url": "https://remoteok.com/remote-jobs/234567",
+    "date": "2024-01-14T00:00:00Z",
+    "tags": ["python", "fastapi", "postgresql"]
+  },
+  {
+    "id": "345678",
+    "position": "Data Scientist",
+    "company": "Analytics Corp",
+    "location": "Remote / USA",
+    "description": "Data scientist with Python, pandas, scikit-learn experience for fintech startup",
+    "url": "https://remoteok.com/remote-jobs/345678",
+    "date": "2024-01-13T00:00:00Z",
+    "tags": ["python", "data-science", "scikit-learn", "pandas"]
+  },
+  {
+    "id": "456789",
+    "position": "AI Researcher",
+    "company": "DeepMind Labs",
+    "location": "Remote / Europe",
+    "description": "AI research scientist working on large language models and transformer architectures",
+    "url": "https://remoteok.com/remote-jobs/456789",
+    "date": "2024-01-12T00:00:00Z",
+    "tags": ["python", "pytorch", "llm", "transformers"]
+  },
+  {
+    "id": "567890",
+    "position": "Python Developer",
+    "company": "OpenSource Co",
+    "location": "Remote / Global",
+    "description": "Python developer for open source tooling, CI/CD pipelines, and developer experience",
+    "url": "https://remoteok.com/remote-jobs/567890",
+    "date": "2024-01-11T00:00:00Z",
+    "tags": ["python", "devops", "ci-cd"]
+  }
+]
