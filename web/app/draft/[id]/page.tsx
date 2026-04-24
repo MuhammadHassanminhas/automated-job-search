@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { api, type Draft, type Job } from "@/lib/api";
+import { requireAuth } from "@/lib/auth";
 import { DraftEditor } from "@/components/DraftEditor";
 import { ApproveBar } from "@/components/ApproveBar";
 
@@ -17,8 +18,7 @@ export default function DraftPage() {
   const [approved, setApproved] = useState(false);
 
   useEffect(() => {
-    api.auth
-      .me()
+    requireAuth()
       .then(async () => {
         const d = await api.drafts.get(draftId);
         setDraft(d);
