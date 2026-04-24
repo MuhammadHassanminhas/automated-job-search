@@ -21,7 +21,7 @@ export interface Draft {
   prompt_version: string | null;
 }
 
-export interface ApplicationResult {
+interface ApplicationResult {
   id: string;
   status: string;
 }
