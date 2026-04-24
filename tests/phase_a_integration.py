@@ -20,9 +20,9 @@ import respx
 import httpx
 from hypothesis import given, settings as h_settings, HealthCheck
 from httpx import ASGITransport, AsyncClient
-from polyfactory.factories.sqlalchemy_factory import SQLAlchemyAsyncFactory
+from polyfactory.factories.pydantic_factory import ModelFactory
 
-from app.auth.session import create_session_cookie, hash_password
+from app.auth.session import hash_password
 from app.config import settings
 from app.main import app as fastapi_app
 from app.models.application import Application, ApplicationStatus
@@ -30,6 +30,8 @@ from app.models.draft import Draft
 from app.models.job import Job, JobSource
 from app.models.profile import Profile
 from app.models.user import User
+from app.schemas.draft import ApplicationRead, DraftRead
+from app.schemas.job import JobRead
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
@@ -45,50 +47,82 @@ TEST_PASSWORD = "IntegPass99!"
 
 
 # ---------------------------------------------------------------------------
-# Polyfactory factories
+# Polyfactory factories (Pydantic schema-based)
 # ---------------------------------------------------------------------------
 
-class JobFactory(SQLAlchemyAsyncFactory):
-    __model__ = Job
-    __set_relationships__ = False
-
-    source = JobSource.REMOTEOK
-    url = "https://remoteok.com/remote-jobs/test"
-    title = "ML Intern"
-    company = "IntTestCo"
-    remote_allowed = True
-    description = "python machine learning pytorch deep learning numpy"
-    keyword_score = 0.75
-    embedding_score = 0.85
+class DraftReadFactory(ModelFactory):
+    """Factory for DraftRead schema — used in mock assertions."""
+    __model__ = DraftRead
 
 
-class ProfileFactory(SQLAlchemyAsyncFactory):
-    __model__ = Profile
-    __set_relationships__ = False
-
-    full_name = "Integration Tester"
-    email = "profile-int@example.com"
-    skills = ["python", "pytorch", "numpy"]
-    base_resume_md = "# Resume\n\n- Python\n- PyTorch\n- NumPy"
+class ApplicationReadFactory(ModelFactory):
+    """Factory for ApplicationRead schema — state machine response shapes."""
+    __model__ = ApplicationRead
 
 
-class ApplicationFactory(SQLAlchemyAsyncFactory):
-    __model__ = Application
-    __set_relationships__ = False
-
-    status = ApplicationStatus.DRAFTED
+class JobReadFactory(ModelFactory):
+    """Factory for JobRead schema — jobs list response shapes."""
+    __model__ = JobRead
 
 
-class DraftFactory(SQLAlchemyAsyncFactory):
-    __model__ = Draft
-    __set_relationships__ = False
+# ---------------------------------------------------------------------------
+# ORM model builder helpers (replaces SQLAlchemy factory for complex models)
+# ---------------------------------------------------------------------------
 
-    resume_md = "# Resume"
-    cover_letter_md = "Dear Hiring Team,"
-    email_subject = "Internship Application"
-    email_body = "I am interested in this opportunity."
-    model_used = "llama-3.3-70b-versatile"
-    prompt_version = "v1"
+def build_job(
+    *,
+    title: str = "ML Intern",
+    company: str = "IntTestCo",
+    description: str = "python machine learning pytorch deep learning numpy",
+    keyword_score: float = 0.75,
+    embedding_score: float | None = 0.85,
+) -> Job:
+    """Build a Job ORM instance without persisting it."""
+    return Job(
+        source=JobSource.REMOTEOK,
+        external_id=f"int-{uuid.uuid4().hex}",
+        url=f"https://remoteok.com/remote-jobs/{uuid.uuid4().hex}",
+        title=title,
+        company=company,
+        remote_allowed=True,
+        description=description,
+        hash=f"hash-{uuid.uuid4().hex}",
+        keyword_score=keyword_score,
+        embedding_score=embedding_score,
+    )
+
+
+def build_profile(
+    *,
+    full_name: str = "Integration Tester",
+    skills: list | None = None,
+    base_resume_md: str = "# Resume\n\n- Python\n- PyTorch\n- NumPy",
+) -> Profile:
+    """Build a Profile ORM instance without persisting it."""
+    return Profile(
+        full_name=full_name,
+        email=f"profile-{uuid.uuid4().hex}@example.com",
+        skills=skills or ["python", "pytorch", "numpy"],
+        base_resume_md=base_resume_md,
+    )
+
+
+def build_application(job_id: uuid.UUID) -> Application:
+    """Build an Application ORM instance without persisting it."""
+    return Application(job_id=job_id, status=ApplicationStatus.DRAFTED)
+
+
+def build_draft(application_id: uuid.UUID) -> Draft:
+    """Build a Draft ORM instance without persisting it."""
+    return Draft(
+        application_id=application_id,
+        resume_md="# Resume",
+        cover_letter_md="Dear Hiring Team,",
+        email_subject="Internship Application",
+        email_body="I am interested in this opportunity.",
+        model_used="llama-3.3-70b-versatile",
+        prompt_version="v1",
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -147,7 +181,7 @@ async def client() -> AsyncGenerator[AsyncClient, None]:
 # ---------------------------------------------------------------------------
 
 @pytest.fixture
-async def seeded_user(db: AsyncSession) -> User:
+async def _seeded_user(db: AsyncSession) -> User:
     existing = await db.scalar(select(User).where(User.email == TEST_EMAIL))
     if existing:
         return existing
@@ -163,7 +197,7 @@ async def seeded_user(db: AsyncSession) -> User:
 # ---------------------------------------------------------------------------
 
 @pytest.fixture
-async def auth_client(seeded_user: User) -> AsyncGenerator[AsyncClient, None]:
+async def auth_client(_seeded_user: User) -> AsyncGenerator[AsyncClient, None]:
     async with AsyncClient(
         transport=ASGITransport(app=fastapi_app), base_url="http://test"
     ) as ac:
@@ -654,7 +688,7 @@ class TestA4AuthAndDraftAPI:
     # ── A.4.1 — Login with valid credentials ─────────────────────────────
 
     async def test_login_valid_credentials_returns_200_and_session_cookie(
-        self, client: AsyncClient, seeded_user: User
+        self, client: AsyncClient, _seeded_user: User
     ) -> None:
         resp = await client.post(
             "/api/auth/login",
@@ -667,7 +701,7 @@ class TestA4AuthAndDraftAPI:
         assert "session" in resp.cookies
 
     async def test_login_sets_httponly_session_cookie(
-        self, client: AsyncClient, seeded_user: User
+        self, client: AsyncClient, _seeded_user: User
     ) -> None:
         resp = await client.post(
             "/api/auth/login",
