@@ -141,15 +141,14 @@ def _make_factory(engine) -> async_sessionmaker[AsyncSession]:
 # Session-scoped DB engine
 # ---------------------------------------------------------------------------
 
-@pytest.fixture(scope="module")
-def engine():
+@pytest.fixture
+async def engine():
     e = _make_engine()
     yield e
-    import asyncio
-    asyncio.get_event_loop().run_until_complete(e.dispose())
+    await e.dispose()
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def session_factory(engine):
     return _make_factory(engine)
 
@@ -510,7 +509,8 @@ class TestA3GenerationService:
             ]
         )
 
-        with patch("app.services.generation.GroqClient", return_value=mock_groq):
+        with patch("app.services.generation.GroqClient", return_value=mock_groq) as MockGroq:
+            MockGroq.MODEL = "llama-3.3-70b-versatile"
             draft = await generate_draft(
                 job_id=job.id,
                 profile_id=profile.id,
@@ -598,7 +598,8 @@ class TestA3GenerationService:
             ]
         )
 
-        with patch("app.services.generation.GroqClient", return_value=mock_groq):
+        with patch("app.services.generation.GroqClient", return_value=mock_groq) as MockGroq:
+            MockGroq.MODEL = "llama-3.3-70b-versatile"
             draft = await generate_draft(
                 job_id=job.id,
                 profile_id=profile.id,
