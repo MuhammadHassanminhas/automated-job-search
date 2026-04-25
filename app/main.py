@@ -1,3 +1,6 @@
+from contextlib import asynccontextmanager
+from typing import AsyncGenerator
+
 from fastapi import FastAPI
 
 from app.api.applications import router as applications_router
@@ -6,10 +9,22 @@ from app.api.drafts import router as drafts_router
 from app.api.health import router as health_router
 from app.api.jobs import router as jobs_router
 from app.logging import configure_logging
+from app.scheduler import create_scheduler
 
 configure_logging()
 
-app = FastAPI(title="Internship Intel", version="0.1.0")
+
+@asynccontextmanager
+async def _lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
+    scheduler = create_scheduler()
+    scheduler.start()
+    try:
+        yield
+    finally:
+        scheduler.shutdown()
+
+
+app = FastAPI(title="Internship Intel", version="0.1.0", lifespan=_lifespan)
 
 app.include_router(health_router)
 app.include_router(auth_router)

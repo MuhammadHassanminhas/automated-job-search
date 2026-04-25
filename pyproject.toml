@@ -24,6 +24,8 @@ dependencies = [
     "itsdangerous>=2.2.0",
     "structlog>=24.4.0",
     "numpy>=1.26.0",
+    "beautifulsoup4>=4.14.3",
+    "lxml>=6.1.0",
 ]
 
 [dependency-groups]
@@ -37,6 +39,7 @@ dev = [
     "vulture>=2.13",
     "ruff>=0.8.0",
     "anyio>=4.6.0",
+    "freezegun>=1.5.5",
 ]
 
 [tool.pytest.ini_options]

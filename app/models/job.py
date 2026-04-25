@@ -4,6 +4,7 @@ from typing import Optional
 
 from pgvector.sqlalchemy import Vector
 from sqlalchemy import DateTime, Enum, Float, Index, String, Text, UniqueConstraint
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base, TimestampMixin
@@ -44,3 +45,4 @@ class Job(TimestampMixin, Base):
     llm_score: Mapped[Optional[float]] = mapped_column(Float)
     llm_reasoning: Mapped[Optional[str]] = mapped_column(Text)
     source_etag: Mapped[Optional[str]] = mapped_column(String(256))
+    llm_matched_skills: Mapped[Optional[list]] = mapped_column(JSONB, nullable=True)

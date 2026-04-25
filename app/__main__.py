@@ -8,17 +8,32 @@ import uuid
 
 def cmd_discover(args: argparse.Namespace) -> None:
     from app.scrapers.remoteok import RemoteOKScraper
+    from app.scrapers.internshala import InternshalasScraper
+    from app.scrapers.rozee import RozeeScraper
     from app.services.dedup import dedup_jobs
     from app.models.job import Job, JobSource as JobSourceEnum
     from app.db import AsyncSessionFactory
     from sqlalchemy.dialects.postgresql import insert as pg_insert
 
-    scraper = RemoteOKScraper()
-    raw_jobs = scraper.run()
+    if getattr(args, "all", False):
+        raw_jobs = (
+            RemoteOKScraper().run()
+            + InternshalasScraper().run()
+            + RozeeScraper().run()
+        )
+        source_label = "all"
+    else:
+        raw_jobs = RemoteOKScraper().run()
+        source_label = args.source
+
     raw_jobs = raw_jobs[: args.limit]
     deduped = dedup_jobs(raw_jobs)
 
-    source_map = {"remoteok": JobSourceEnum.REMOTEOK}
+    source_map = {
+        "remoteok": JobSourceEnum.REMOTEOK,
+        JobSourceEnum.INTERNSHALA: JobSourceEnum.INTERNSHALA,
+        JobSourceEnum.ROZEE: JobSourceEnum.ROZEE,
+    }
 
     def _hash(rj) -> str:
         key = f"{rj.company.lower().strip()}|{rj.title.lower().strip()}|{(rj.location or '').lower().strip()}"
@@ -28,11 +43,12 @@ def cmd_discover(args: argparse.Namespace) -> None:
         saved = 0
         async with AsyncSessionFactory() as session:
             for rj in deduped:
+                src = rj.source if isinstance(rj.source, JobSourceEnum) else source_map.get(rj.source, JobSourceEnum.REMOTEOK)
                 stmt = (
                     pg_insert(Job)
                     .values(
                         id=uuid.uuid4(),
-                        source=source_map.get(rj.source, JobSourceEnum.REMOTEOK),
+                        source=src,
                         external_id=rj.external_id,
                         url=rj.url,
                         title=rj.title,
@@ -51,10 +67,11 @@ def cmd_discover(args: argparse.Namespace) -> None:
         return saved
 
     saved = asyncio.run(_persist())
-    print(f"Discovered {len(deduped)} jobs from {args.source}, saved {saved} new")
+    print(f"Discovered {len(deduped)} jobs from {source_label}, saved {saved} new")
 
 
-def cmd_rank(_args: argparse.Namespace) -> None:
+def cmd_rank(args: argparse.Namespace) -> None:
+    import logging
     from app.models.job import Job
     from app.models.profile import Profile
     from app.ranker.keyword import keyword_score
@@ -83,6 +100,18 @@ def cmd_rank(_args: argparse.Namespace) -> None:
             for job, vec in zip(jobs, job_vecs):
                 job.keyword_score = keyword_score(skills, job.description or job.title)
                 job.embedding_score = cosine_similarity(profile_vec, vec)
+
+            if getattr(args, "full", False):
+                try:
+                    from app.ranker.llm_judge import judge_job
+                    top_n = [j for j in jobs if j.llm_score is None]
+                    for job in top_n:
+                        await judge_job(job, profile, session)
+                except ImportError:
+                    logging.getLogger(__name__).warning(
+                        "app.ranker.llm_judge not available — skipping LLM judge step"
+                    )
+
             await session.commit()
         print(f"Ranked {len(jobs)} jobs.")
 
@@ -153,9 +182,12 @@ def main() -> None:
     disc = sub.add_parser("discover")
     disc.add_argument("--source", default="remoteok")
     disc.add_argument("--limit", type=int, default=50)
+    disc.add_argument("--all", action="store_true", dest="all", default=False)
     disc.set_defaults(func=cmd_discover)
 
-    sub.add_parser("rank").set_defaults(func=cmd_rank)
+    rank_p = sub.add_parser("rank")
+    rank_p.add_argument("--full", action="store_true", dest="full", default=False)
+    rank_p.set_defaults(func=cmd_rank)
 
     prof = sub.add_parser("profile")
     prof_sub = prof.add_subparsers(dest="profile_cmd", required=True)

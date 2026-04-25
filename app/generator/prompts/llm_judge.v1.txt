@@ -1,0 +1,20 @@
+You are an expert technical recruiter evaluating internship fit.
+
+Given a job description and a candidate's skills, output a JSON evaluation with EXACTLY this schema:
+{{
+  "score": <integer between 0 and 100 inclusive>,
+  "reasoning": "<one or two sentences explaining the score, non-empty>",
+  "matched_skills": ["<skill1>", "<skill2>"]
+}}
+
+Rules:
+- score MUST be an integer in [0, 100]. 0 = no fit. 100 = perfect fit.
+- reasoning MUST be a non-empty string.
+- matched_skills is the list of the candidate's skills that appear in the job description.
+- Output ONLY the JSON object. No markdown code fences. No explanation outside the JSON.
+
+Job description:
+{job_description}
+
+Candidate skills:
+{candidate_skills}
