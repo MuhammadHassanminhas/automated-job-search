@@ -10,6 +10,7 @@ from app.config import settings
 from app.generator.cold_email import build_cold_email_prompt, parse_cold_email
 from app.generator.cover_letter import build_cover_letter_prompt
 from app.generator.resume import build_resume_prompt
+from app.llm import make_llm_client
 from app.llm.client import LLMClient
 from app.llm.groq_client import GroqClient
 from app.models.application import Application, ApplicationStatus
@@ -81,7 +82,7 @@ async def generate_draft(
         raise ValueError(f"Profile {profile_id} not found")
 
     skills: list[str] = profile.skills or []
-    groq = GroqClient()
+    client = make_llm_client()
 
     # 3. Build prompts and call LLM (with caching)
     resume_prompt = build_resume_prompt(
@@ -90,20 +91,20 @@ async def generate_draft(
         company=job.company,
         skills=skills,
     )
-    resume_md = await cached_complete(resume_prompt, session, groq)
+    resume_md = await cached_complete(resume_prompt, session, client)
 
     cl_prompt = build_cover_letter_prompt(
         job_title=job.title,
         company=job.company,
         matched_skills=skills,
     )
-    cover_letter_md = await cached_complete(cl_prompt, session, groq)
+    cover_letter_md = await cached_complete(cl_prompt, session, client)
 
     email_prompt = build_cold_email_prompt(
         job_title=job.title,
         company=job.company,
     )
-    email_raw = await cached_complete(email_prompt, session, groq)
+    email_raw = await cached_complete(email_prompt, session, client)
     email_subject, email_body = parse_cold_email(email_raw)
 
     # 4. Persist Application and Draft

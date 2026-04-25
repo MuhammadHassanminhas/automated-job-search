@@ -14,6 +14,7 @@ vi.mock("@/lib/api", () => ({
   api: {
     auth: { me: vi.fn() },
     jobs: { list: vi.fn() },
+    drafts: { generate: vi.fn() },
   },
 }));
 
@@ -92,6 +93,18 @@ describe("InboxPage", () => {
     render(<InboxPage />);
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: /inbox/i })).toBeInTheDocument();
+    });
+  });
+
+  it("clicking a job card calls api.drafts.generate and navigates to draft", async () => {
+    const user = userEvent.setup();
+    (api.drafts.generate as ReturnType<typeof vi.fn>).mockResolvedValue({ id: "draft-xyz" });
+    render(<InboxPage />);
+    await waitFor(() => expect(screen.getAllByTestId("job-card")).toHaveLength(2));
+    await user.click(screen.getAllByTestId("job-card")[0]);
+    await waitFor(() => {
+      expect(api.drafts.generate).toHaveBeenCalledWith("job-1");
+      expect(pushMock).toHaveBeenCalledWith("/draft/draft-xyz");
     });
   });
 });

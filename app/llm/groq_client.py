@@ -5,10 +5,10 @@ from app.config import settings
 from app.llm.client import LLMClient
 
 try:
-    from groq import Groq
+    from groq import Groq, RateLimitError as GroqRateLimitError
     from tenacity import (
         retry,
-        retry_if_exception_type,
+        retry_if_not_exception_type,
         stop_after_attempt,
         wait_exponential,
     )
@@ -16,7 +16,7 @@ try:
     _TENACITY_AVAILABLE = True
 except ImportError:
     try:
-        from groq import Groq  # type: ignore[no-redef]
+        from groq import Groq, RateLimitError as GroqRateLimitError  # type: ignore[no-redef,assignment]
         _GROQ_AVAILABLE = True
         _TENACITY_AVAILABLE = False
     except ImportError:
@@ -29,7 +29,7 @@ def _make_retry_decorator():  # type: ignore[return]
         return retry(
             stop=stop_after_attempt(3),
             wait=wait_exponential(min=1, max=10),
-            retry=retry_if_exception_type(Exception),
+            retry=retry_if_not_exception_type(GroqRateLimitError),
         )
     return None
 
@@ -37,10 +37,10 @@ def _make_retry_decorator():  # type: ignore[return]
 class GroqClient(LLMClient):
     MODEL = "llama-3.3-70b-versatile"
 
-    def __init__(self) -> None:
+    def __init__(self, api_key: str | None = None) -> None:
         if not _GROQ_AVAILABLE:
             raise ImportError("groq package not installed")
-        self._client = Groq(api_key=settings.groq_api_key)
+        self._client = Groq(api_key=api_key or settings.groq_api_key)
         _dec = _make_retry_decorator()
         if _dec is not None:
             self._call_api = _dec(self._call_api)  # type: ignore[method-assign]

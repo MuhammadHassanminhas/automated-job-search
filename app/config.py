@@ -6,8 +6,9 @@ class Settings(BaseSettings):
 
     database_url: str = "postgresql+asyncpg://intern:intern@localhost:5432/internship"
     groq_api_key: str = ""
+    groq_api_key_2: str = ""
     gemini_api_key: str = ""
-    gemini_model: str = "gemini-1.5-flash"
+    gemini_model: str = "gemini-2.0-flash-lite"
     env: str = "development"
     max_drafts_per_day: int = 10
     discovery_interval_hours: int = 6

@@ -2,7 +2,14 @@
   "permissions": {
     "allow": [
       "Bash(git add *)",
-      "Bash(git commit *)"
+      "Bash(git commit *)",
+      "Bash(git -C /c/Users/muham/OneDrive/Documents/PROJECTS/AI_INTERN status)",
+      "Bash(echo \"STATUS_EXIT:$?\")",
+      "Bash(grep -rnE \"TODO|FIXME|XXX|NotImplementedError|^\\\\s*pass\\\\s*$\" /c/Users/muham/OneDrive/Documents/PROJECTS/AI_INTERN/app /c/Users/muham/OneDrive/Documents/PROJECTS/AI_INTERN/web/src --include=\"*.py\" --include=\"*.ts\" --include=\"*.tsx\")",
+      "Bash(echo \"grep_src_exit:$?\")",
+      "Bash(git -C /c/Users/muham/OneDrive/Documents/PROJECTS/AI_INTERN checkout main)",
+      "Bash(git -C /c/Users/muham/OneDrive/Documents/PROJECTS/AI_INTERN stash pop)",
+      "Bash(echo \"RETURN_EXIT:$?\")"
     ]
   }
 }

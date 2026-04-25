@@ -3,6 +3,7 @@ import argparse
 import asyncio
 import hashlib
 import pathlib
+import time
 import uuid
 
 
@@ -104,9 +105,25 @@ def cmd_rank(args: argparse.Namespace) -> None:
             if getattr(args, "full", False):
                 try:
                     from app.ranker.llm_judge import judge_job
+                    from app.llm import make_llm_client
+                    client = make_llm_client()
                     top_n = [j for j in jobs if j.llm_score is None]
                     for job in top_n:
-                        await judge_job(job, profile, session)
+                        try:
+                            result = judge_job(
+                                job.description or job.title,
+                                skills,
+                                client,
+                                session,
+                            )
+                            job.llm_score = float(result.score)
+                            job.llm_reasoning = result.reasoning
+                            job.llm_matched_skills = result.matched_skills
+                        except Exception as exc:
+                            logging.getLogger(__name__).warning(
+                                "LLM judge skipped for job %s: %s", job.id, exc
+                            )
+                        time.sleep(2)
                 except ImportError:
                     logging.getLogger(__name__).warning(
                         "app.ranker.llm_judge not available — skipping LLM judge step"

@@ -1,32 +1,23 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import type { Job } from "@/lib/api";
 
 interface Props {
   job: Job;
-  draftId?: string;
+  onClick?: () => void;
 }
 
-export function JobCard({ job, draftId }: Props) {
-  const router = useRouter();
-
+export function JobCard({ job, onClick }: Props) {
   const score =
     job.embedding_score !== null
       ? (job.embedding_score * 100).toFixed(0) + "%"
       : "—";
 
-  function handleClick() {
-    if (draftId) {
-      router.push(`/draft/${draftId}`);
-    }
-  }
-
   return (
     <div
       role="listitem"
-      onClick={handleClick}
-      className="cursor-pointer rounded-lg border border-gray-200 bg-white p-4 shadow-sm hover:shadow-md transition-shadow"
+      onClick={onClick}
+      className={`rounded-lg border border-gray-200 bg-white p-4 shadow-sm hover:shadow-md transition-shadow${onClick ? " cursor-pointer" : ""}`}
       data-testid="job-card"
     >
       <div className="flex items-start justify-between gap-2">

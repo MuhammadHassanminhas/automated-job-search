@@ -10,6 +10,7 @@ export default function InboxPage() {
   const router = useRouter();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState<string | null>(null);
 
   useEffect(() => {
     api.auth
@@ -19,6 +20,16 @@ export default function InboxPage() {
       .catch(() => router.push("/login"))
       .finally(() => setLoading(false));
   }, [router]);
+
+  async function handleGenerate(jobId: string) {
+    setGenerating(jobId);
+    try {
+      const draft = await api.drafts.generate(jobId);
+      router.push(`/draft/${draft.id}`);
+    } catch {
+      setGenerating(null);
+    }
+  }
 
   if (loading) {
     return (
@@ -39,13 +50,19 @@ export default function InboxPage() {
           Sign out
         </button>
       </div>
+      {generating && (
+        <p className="mb-4 text-sm text-indigo-600">Generating draft…</p>
+      )}
       {jobs.length === 0 ? (
         <p className="text-sm text-gray-500">No jobs found. Run `discover` then `rank`.</p>
       ) : (
         <ul role="list" className="flex flex-col gap-3" aria-label="job list">
           {jobs.map((job) => (
             <li key={job.id}>
-              <JobCard job={job} />
+              <JobCard
+                job={job}
+                onClick={generating ? undefined : () => handleGenerate(job.id)}
+              />
             </li>
           ))}
         </ul>
