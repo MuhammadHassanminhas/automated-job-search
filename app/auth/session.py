@@ -5,7 +5,14 @@ from passlib.context import CryptContext
 
 from app.config import settings
 
-_pwd_ctx = CryptContext(schemes=["argon2"], deprecated="auto")
+_pwd_ctx = CryptContext(
+    schemes=["argon2"],
+    deprecated="auto",
+    argon2__type="ID",
+    argon2__time_cost=3,
+    argon2__memory_cost=65536,
+    argon2__parallelism=4,
+)
 _serializer = URLSafeTimedSerializer(settings.session_secret, salt="session")
 
 MAX_AGE = 60 * 60 * 24 * 7  # 7 days
