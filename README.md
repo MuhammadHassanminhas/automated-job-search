@@ -150,6 +150,4 @@ The scrapers occasionally break when one of the source sites changes its HTML â€
 
 MIT. See [LICENSE](LICENSE).
 
-## Acknowledgments
 
-The architecture was designed and the code was written with heavy use of Claude (Anthropic) running inside Claude Code. I'm not going to pretend I typed every line by hand. What I will say is that every commit was reviewed and approved by me, every test was watched go red and then green, and every checkpoint was verified end-to-end before being signed off. The AI did the typing; the decisions were mine.
