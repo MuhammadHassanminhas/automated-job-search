@@ -30,7 +30,7 @@ uv run vulture app tests --min-confidence 80
 uv run ruff check --select F401,F841,F811 app tests
 cd web && pnpm dlx knip
 grep -rnE "TODO|FIXME|XXX|NotImplementedError|^\s*pass\s*$" \
-  app web --include="*.py" --include="*.ts" --include="*.tsx"
+  app web --include="*.py" --include="*.ts" --include="*.tsx" --exclude-dir=node_modules
 ```
 
 All four commands must exit zero. Any finding blocks the checkpoint.

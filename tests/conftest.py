@@ -10,3 +10,10 @@ import pytest
 @pytest.fixture(scope="session")
 def anyio_backend():
     return "asyncio"
+
+
+@pytest.fixture(autouse=True)
+def reset_rate_limits():
+    from app.auth.ratelimit import limiter
+    limiter._storage.reset()
+    yield

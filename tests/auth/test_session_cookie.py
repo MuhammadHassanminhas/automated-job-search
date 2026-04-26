@@ -27,11 +27,11 @@ from app.models.user import User
 
 def _make_user(email: str, password: str) -> User:
     """Build an in-memory User with a valid password hash (no DB needed)."""
-    user = User.__new__(User)
-    user.id = uuid.uuid4()
-    user.email = email
-    user.password_hash = hash_password(password)
-    return user
+    return User(
+        id=uuid.uuid4(),
+        email=email,
+        password_hash=hash_password(password),
+    )
 
 
 @pytest.fixture
@@ -168,16 +168,9 @@ class TestNonSecureCookieInDevelopment:
 # ---------------------------------------------------------------------------
 
 
-@given(
-    env=st.sampled_from(["production", "development", "staging", "test"]),
-    extra_attr=st.text(
-        min_size=0,
-        max_size=32,
-        alphabet=st.characters(whitelist_categories=("Lu", "Ll", "Nd"), whitelist_characters="-_="),
-    ),
-)
+@given(env=st.sampled_from(["production", "development", "staging", "test"]))
 @h_settings(max_examples=20)
-def test_cookie_secure_flag_matches_env(env: str, extra_attr: str) -> None:
+def test_cookie_secure_flag_matches_env(env: str) -> None:
     """Property: Secure flag in Set-Cookie always matches whether env == 'production'."""
     from app.main import app as fastapi_app
     from app.db import get_db
