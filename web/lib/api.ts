@@ -26,6 +26,36 @@ interface ApplicationResult {
   status: string;
 }
 
+export interface Application {
+  id: string;
+  job_id: string;
+  draft_id?: string;
+  status: "APPLIED" | "SENT" | "RESPONDED" | "REJECTED" | "APPROVED" | "DRAFTING" | "SENDING" | "INTERVIEWING" | "OFFERED";
+  job_title: string;
+  company: string;
+  created_at: string;
+  job?: {
+    id: string;
+    title: string;
+    company: string;
+    location: string | null;
+  };
+}
+
+export interface DraftWithJob {
+  id: string;
+  application_id: string;
+  status: "PENDING" | "APPROVED" | "REJECTED";
+  resume_md: string | null;
+  cover_letter_md: string | null;
+  email_subject: string | null;
+  email_body: string | null;
+  model_used: string | null;
+  prompt_version: string | null;
+  job_title: string;
+  company: string;
+}
+
 const BASE = "/api";
 
 async function request<T>(
@@ -62,6 +92,13 @@ export const api = {
       request<ApplicationResult>("POST", `/drafts/${draftId}/approve`),
     reject: (draftId: string) =>
       request<ApplicationResult>("POST", `/drafts/${draftId}/reject`),
+    list: (status?: string) =>
+      request<DraftWithJob[]>("GET", status ? `/drafts?status=${status}` : "/drafts"),
+  },
+  applications: {
+    list: () => request<Application[]>("GET", "/applications"),
+    patch: (id: string, body: { status: string }) =>
+      request<Application>("PATCH", `/applications/${id}`, body),
   },
   auth: {
     login: (email: string, password: string) =>

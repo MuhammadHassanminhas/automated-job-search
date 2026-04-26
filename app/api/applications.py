@@ -10,7 +10,8 @@ from app.auth.deps import get_current_user
 from app.db import get_db as get_session
 from app.models.application import Application
 from app.models.user import User
-from app.schemas.draft import ApplicationRead
+from app.schemas.draft import ApplicationRead, ApplicationStatusPatch
+from app.services.application_status import StatusTransitionError, transition_status
 
 router = APIRouter(prefix="/api/applications", tags=["applications"])
 
@@ -33,4 +34,24 @@ async def get_application(
     app = await db.scalar(select(Application).where(Application.id == application_id))
     if app is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Application not found")
+    return app
+
+
+@router.patch("/{application_id}", response_model=ApplicationRead)
+async def patch_application(
+    application_id: uuid.UUID,
+    body: ApplicationStatusPatch,
+    _user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_session),
+) -> Application:
+    app = await db.scalar(select(Application).where(Application.id == application_id))
+    if app is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Application not found")
+    try:
+        new_status = transition_status(app.status.value, event=body.status)
+    except StatusTransitionError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+    app.status = new_status
+    await db.commit()
+    await db.refresh(app)
     return app

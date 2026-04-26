@@ -15,6 +15,10 @@ class Settings(BaseSettings):
     ranking_interval_hours: int = 1
     log_level: str = "INFO"
     session_secret: str = "changeme"
+    fernet_key: str = ""
+    gmail_oauth_client_id: str = ""
+    gmail_oauth_client_secret: str = ""
+    gmail_oauth_redirect_uri: str = "http://localhost:8000/api/auth/gmail/callback"
 
 
 settings = Settings()

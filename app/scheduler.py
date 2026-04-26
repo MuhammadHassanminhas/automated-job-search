@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
+from app.services.sender import process_send_queue
+
 
 async def _discovery_tick() -> None:
     """Placeholder — wired in Phase B.2."""
@@ -13,9 +15,16 @@ async def _rank_tick() -> None:
     ...
 
 
+async def sender_tick() -> None:
+    """Exported sender tick — tests mock app.scheduler.process_send_queue."""
+    from app.db import AsyncSessionFactory
+
+    async with AsyncSessionFactory() as session:
+        await process_send_queue(session)
+
+
 async def _sender_tick() -> None:
-    """Placeholder — wired in Phase B.2."""
-    ...
+    await sender_tick()
 
 
 def create_scheduler() -> AsyncIOScheduler:

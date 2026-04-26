@@ -31,3 +31,7 @@ class ApplicationRead(BaseModel):
     status: str
 
     model_config = {"from_attributes": True}
+
+
+class ApplicationStatusPatch(BaseModel):
+    status: str
