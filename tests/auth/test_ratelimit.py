@@ -144,7 +144,8 @@ class TestAuthEndpointBurstRateLimit:
         headers = {"X-Forwarded-For": "10.1.0.1"}
         statuses: list[int] = []
         for _ in range(11):
-            resp = test_client.get("/api/auth/me", headers=headers)
+            # /logout has no auth dependency so the rate-limit decorator fires on every call
+            resp = test_client.post("/api/auth/logout", headers=headers)
             statuses.append(resp.status_code)
         assert 429 in statuses, (
             f"Expected 429 after 10 requests, got statuses: {statuses}"
@@ -185,7 +186,8 @@ def test_n_requests_above_threshold_produces_429(n: int) -> None:
             headers = {"X-Forwarded-For": f"10.2.{n}.1"}
             statuses: list[int] = []
             for _ in range(n):
-                resp = client.get("/api/auth/me", headers=headers)
+                # /logout has no auth dependency; rate-limit fires on every request
+                resp = client.post("/api/auth/logout", headers=headers)
                 statuses.append(resp.status_code)
             assert 429 in statuses, (
                 f"N={n} requests did not produce any 429. Statuses: {statuses}"
