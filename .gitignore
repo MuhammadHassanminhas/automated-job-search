@@ -22,12 +22,20 @@ build/
 htmlcov/
 .tox/
 .nox/
+.hypothesis/
+
+# Linting / type-checking caches
+.ruff_cache/
+.mypy_cache/
 
 # Node
 node_modules/
 .next/
 .nuxt/
 out/
+
+# TypeScript build artifacts
+*.tsbuildinfo
 
 # App specific
 drafts/

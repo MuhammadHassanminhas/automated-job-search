@@ -28,18 +28,11 @@ interface ApplicationResult {
 
 export interface Application {
   id: string;
-  job_id: string;
-  draft_id?: string;
-  status: "APPLIED" | "SENT" | "RESPONDED" | "REJECTED" | "APPROVED" | "DRAFTING" | "SENDING" | "INTERVIEWING" | "OFFERED";
-  job_title: string;
-  company: string;
-  created_at: string;
-  job?: {
-    id: string;
-    title: string;
-    company: string;
-    location: string | null;
-  };
+  job_id?: string | null;
+  status: "DRAFTED" | "APPROVED" | "SENDING" | "SENT" | "RESPONDED" | "INTERVIEWING" | "OFFERED" | "REJECTED" | "WITHDRAWN" | "FAILED";
+  job_title?: string | null;
+  company?: string | null;
+  created_at?: string | null;
 }
 
 export interface DraftWithJob {

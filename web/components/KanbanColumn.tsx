@@ -3,7 +3,8 @@ import { ApplicationCard } from "./ApplicationCard";
 import type { Application } from "@/lib/api";
 
 const COLUMN_COLORS: Record<string, string> = {
-  APPLIED:      "bg-blue-50 border-blue-200",
+  DRAFTED:      "bg-gray-50 border-gray-200",
+  APPROVED:     "bg-blue-50 border-blue-200",
   SENT:         "bg-yellow-50 border-yellow-200",
   RESPONDED:    "bg-green-50 border-green-200",
   INTERVIEWING: "bg-purple-50 border-purple-200",

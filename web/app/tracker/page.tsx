@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { api, type Application } from "@/lib/api";
 import { KanbanColumn } from "@/components/KanbanColumn";
 
-const COLUMNS = ["APPLIED", "SENT", "RESPONDED", "INTERVIEWING", "OFFERED", "REJECTED"] as const;
+const COLUMNS = ["DRAFTED", "APPROVED", "SENT", "RESPONDED", "INTERVIEWING", "OFFERED", "REJECTED"] as const;
 
 export default function TrackerPage() {
   const router = useRouter();

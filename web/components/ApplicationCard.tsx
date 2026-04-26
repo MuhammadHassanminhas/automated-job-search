@@ -7,8 +7,8 @@ interface Props {
 }
 
 export function ApplicationCard({ application, onDragStart }: Props) {
-  const title = application.job?.title ?? application.job_title;
-  const company = application.job?.company ?? application.company;
+  const title = application.job_title ?? "(unknown job)";
+  const company = application.company ?? "";
 
   function handleDragStart(e: React.DragEvent<HTMLDivElement>) {
     if (e.dataTransfer) {

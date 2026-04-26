@@ -67,7 +67,7 @@ export default function ProfilePage() {
           ) : errorSource ? (
             <p className="text-sm text-red-500">Failed to load.</p>
           ) : sourceRates.length === 0 ? (
-            <p className="text-sm text-gray-400">No data yet.</p>
+            <p className="text-sm text-gray-400">No data yet — appears once emails have been sent.</p>
           ) : (
             <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
               <table className="w-full text-sm">
@@ -112,7 +112,7 @@ export default function ProfilePage() {
           ) : errorPrompt ? (
             <p className="text-sm text-red-500">Failed to load.</p>
           ) : promptRates.length === 0 ? (
-            <p className="text-sm text-gray-400">No data yet.</p>
+            <p className="text-sm text-gray-400">No data yet — appears once drafts have been sent.</p>
           ) : (
             <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
               <table className="w-full text-sm">

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import uuid
+from datetime import datetime
 from typing import Optional
 
 from pydantic import BaseModel
@@ -29,6 +30,10 @@ class DraftPatch(BaseModel):
 class ApplicationRead(BaseModel):
     id: uuid.UUID
     status: str
+    job_id: Optional[uuid.UUID] = None
+    job_title: Optional[str] = None
+    company: Optional[str] = None
+    created_at: Optional[datetime] = None
 
     model_config = {"from_attributes": True}
 

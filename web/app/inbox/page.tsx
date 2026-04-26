@@ -11,6 +11,7 @@ export default function InboxPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState<string | null>(null);
+  const [generateError, setGenerateError] = useState<string | null>(null);
 
   useEffect(() => {
     api.auth
@@ -23,10 +24,12 @@ export default function InboxPage() {
 
   async function handleGenerate(jobId: string) {
     setGenerating(jobId);
+    setGenerateError(null);
     try {
       const draft = await api.drafts.generate(jobId);
       router.push(`/draft/${draft.id}`);
-    } catch {
+    } catch (err) {
+      setGenerateError(err instanceof Error ? err.message : "Failed to generate draft");
       setGenerating(null);
     }
   }
@@ -51,7 +54,10 @@ export default function InboxPage() {
         </button>
       </div>
       {generating && (
-        <p className="mb-4 text-sm text-indigo-600">Generating draft…</p>
+        <p className="mb-4 text-sm text-indigo-600">Generating draft… (this may take 10–20 s)</p>
+      )}
+      {generateError && (
+        <p className="mb-4 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{generateError}</p>
       )}
       {jobs.length === 0 ? (
         <p className="text-sm text-gray-500">No jobs found. Run `discover` then `rank`.</p>
